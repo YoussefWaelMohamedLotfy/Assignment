@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.NetworkInformation;
+using System.Text.Json;
 
 namespace Q1_WindowsService;
 
@@ -8,6 +9,11 @@ public sealed class Worker : BackgroundService
     private readonly ILogger<Worker> _logger;
     private readonly EmailService _emailService;
     private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromSeconds(5)); // Change to 12 Hours
+
+    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    {
+        WriteIndented = true,
+    };
 
     public Worker(ILogger<Worker> logger, EmailService emailService)
     {
@@ -20,8 +26,10 @@ public sealed class Worker : BackgroundService
         while (await _periodicTimer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
         {
             var currentWorkload = GetMachineCurrentWorkload();
+            string workloadFilePath = "Workload.json";
+            File.WriteAllText(workloadFilePath, JsonSerializer.Serialize(currentWorkload, _jsonSerializerOptions));
 
-            _emailService.SendEmail();
+            _emailService.SendEmail(workloadFilePath);
         }
     }
 
