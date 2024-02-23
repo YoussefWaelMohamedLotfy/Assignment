@@ -17,37 +17,44 @@ public sealed class EmailService
 
     public void SendEmail(string filePath)
     {
-        var now = DateTime.Now;
-        using var message = new MimeMessage();
+        var message = new MimeMessage();
         message.From.Add(new MailboxAddress(_emailSettings.FromName, _emailSettings.FromAddress));
         message.To.Add(new MailboxAddress(_emailSettings.ToName, _emailSettings.ToAddress));
-        message.Subject = $"PC Workload for {now}";
 
-        var body = new TextPart(TextFormat.Plain)
-        {
-            Text = $"Kindly find the attached file for the Machine Workload on {now}"
-        };
+        message.Subject = "PC Workload";
+        //  BodyBuilder() to construct the body ( probably the easiest way)
 
-        var attachment = new MimePart("text", "plain")
-        {
-            Content = new MimeContent(File.OpenRead(filePath), ContentEncoding.Default),
-            ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
-            ContentTransferEncoding = ContentEncoding.Base64,
-            FileName = Path.GetFileName(filePath)
-        };
+        var bodyBuilder = new BodyBuilder();
+        bodyBuilder.HtmlBody = @"
+                                <h1 style='color: #2a6496;'>PC Workload for " + DateTime.Now + @"</h1>
+                                
+                                <p style='font-size: 16px;'>
+                                    Kindly find the attached file for the <b>Machine Workload</b>.
+                                </p>
+                                
+                                <p style='font-family: Arial;'>
+                                    Thank You,<br>
+                                    IT Team
+                                </p>
+                                ";
 
-        // now create the multipart/mixed container to hold the message text and the
-        // image attachment
-        var multipart = new Multipart("mixed");
-        multipart.Add(body);
-        multipart.Add(attachment);
+        var attachment = bodyBuilder.LinkedResources.Add(filePath);
+        attachment.ContentId = Path.GetFileName(filePath);
+        //attachment and give it a ContentId like it was implemented
 
-        message.Body = multipart;
+        bodyBuilder.HtmlBody += @"
+        <p style='font-size: 12px;'>
+            <a href='cid:" + attachment.ContentId + @"' style='color: #2a6496;'>
+            Download Report
+            </a>
+        </p>
+        ";
+
+        message.Body = bodyBuilder.ToMessageBody();
+        //ToMessageBody() to convert BodyBuilder to a MimeEntity (pretty much what's the lib doc says)
 
         using var client = new SmtpClient();
         client.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-
-        // Note: only needed if the SMTP server requires authentication
         client.Authenticate(_emailSettings.GmailUsername, _emailSettings.GmailPassword);
 
         client.Send(message);

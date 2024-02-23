@@ -8,7 +8,7 @@ public sealed class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly EmailService _emailService;
-    private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromHours(12));
+    private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromSeconds(10));
 
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
