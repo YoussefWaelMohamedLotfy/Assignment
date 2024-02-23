@@ -8,7 +8,7 @@ public sealed class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly EmailService _emailService;
-    private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromSeconds(5)); // Change to 12 Hours
+    private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromHours(12));
 
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
@@ -59,8 +59,6 @@ public sealed class Worker : BackgroundService
             long totalSize = drive.TotalSize / 1024 / 1024 / 1024;
 
             totalFreeDriveSize += availableFreeSpace;
-
-            //await Console.Out.WriteLineAsync($"{name} ({driveFormat}): {availableFreeSpace} GB Free out of {totalSize} GB");
         }
 
         foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
